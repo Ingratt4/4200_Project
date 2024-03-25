@@ -1,6 +1,8 @@
 package com.example.a4200_project;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -15,6 +17,15 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private Paint playerPaint;
     private int playerX, playerY; // Player's position
     private int playerSize = 100; // Size of the player square
+    private int gravity = 10;
+    private int worldSpeed = 5;
+    private Bitmap backgroundBitmap;
+    private int backgroundWidth, backgroundHeight;
+    private int bgX;
+
+
+
+    private boolean running = true; // Flag to control the game loop
 
     public GameView(Context context) {
         this(context, null);
@@ -32,12 +43,20 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         // Initialize player position
         playerX = 100; // Initial X position
         playerY = 100; // Initial Y position
+
+        backgroundBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.background_image);
+        backgroundWidth = backgroundBitmap.getWidth();
+        backgroundHeight = backgroundBitmap.getHeight();
+        bgX = 0;
+
+
     }
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         // Start drawing when the surface is created
         draw();
+        startGameLoop();
     }
 
     @Override
@@ -47,6 +66,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
+        stopGameLoop();
         // Clean up resources when surface is destroyed
     }
 
@@ -67,7 +87,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         if (canvas != null) {
             try {
                 // Clear the canvas
-                canvas.drawColor(Color.WHITE);
+                canvas.drawBitmap(backgroundBitmap, bgX, 0, null);
 
                 // Draw the player square
                 canvas.drawRect(playerX, playerY, playerX + playerSize, playerY + playerSize, playerPaint);
@@ -76,6 +96,56 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             }
         }
     }
+
+    private void startGameLoop() {
+        running = true;
+        gravityThread.start();
+        worldMovementThread.start();
+    }
+
+    private void stopGameLoop() {
+        running = false;
+        gravityThread.interrupt();
+        worldMovementThread.interrupt();
+    }
+
+    private Thread gravityThread = new Thread(new Runnable() {
+        @Override
+        public void run() {
+            while (running && !Thread.currentThread().isInterrupted()) {
+                // Update player's vertical position for gravity effect
+                playerY += gravity;
+                // Redraw the canvas
+                draw();
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+    });
+
+    private Thread worldMovementThread = new Thread(new Runnable() {
+        @Override
+        public void run() {
+            while (running && !Thread.currentThread().isInterrupted()) {
+                // Update world position for side-scrolling effect
+                // Move background to the left
+                bgX -= worldSpeed;
+                if (bgX <= -backgroundWidth) {
+                    bgX = 0; // Reset background position when it reaches the end
+                }
+                // Redraw the canvas
+                draw();
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+    });
 
     private void jump() {
         // Move the player upwards (jump)
