@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 
 
 public class GameActivity extends Activity {
@@ -18,5 +19,7 @@ public class GameActivity extends Activity {
         // Create and set the game view as the content view
         GameView gameView = new GameView(this);
         setContentView(gameView);
+
+
     }
 }

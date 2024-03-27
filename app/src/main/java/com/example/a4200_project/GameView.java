@@ -5,8 +5,11 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -14,30 +17,40 @@ import android.view.SurfaceView;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 
 public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
 
-    private static final long PIPE_SPAWN_INTERVAL = 2000; // Interval between pipe spawns (milliseconds)
+    private static final long PIPE_SPAWN_INTERVAL = 3300; // Interval between pipe spawns (milliseconds)
+    private static final int GAP_SIZE =400 ;
 
 
     private SurfaceHolder surfaceHolder;
-    private Paint playerPaint;
     private int playerX, playerY; // Player's position
-    private int playerSize = 100; // Size of the player square
+
     private int gravity = 10;
-    private int worldSpeed = 5;
+
+    private int gapSize = 200; // You can adjust this value as needed
+
+    private int score = 0; // Player's score
+    private int worldSpeed = 10;
     private Bitmap backgroundBitmap;
-    private Bitmap birdBitmap;
+    private static final int MAX_PIPES = 5; // Maximum number of active pipes on the screen
+    private Bitmap pipeBitmap, pipeTopBitmap;
+    private Bitmap birdBitmap, birdUpBitmap, birdDownBitmap;
+
     private int backgroundWidth, backgroundHeight;
     private int bgX;
     private List<Pipe> pipes = new ArrayList<>(); // List to hold active pipes
     private long lastPipeSpawnTime; // Timestamp of the last pipe spawn
 
+    private int velocity = 0; // Player's velocity
+    private final int jumpStrength = -40; // Negative value to move up
 
 
     private boolean running = true; // Flag to control the game loop
-
+    private int gapHeight = 200; // The vertical gap between the top and bottom pipes
     public GameView(Context context) {
         this(context, null);
     }
@@ -49,65 +62,106 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
         // Initialize player paint
         birdBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.bird);
-        int birdWidth = 250;
-        int birdHeight = 250;
+        birdUpBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.bird_up);
+        birdDownBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.bird_down);
+
+
+        int birdWidth = 100;
+        int birdHeight = 100;
         birdBitmap = Bitmap.createScaledBitmap(birdBitmap, birdWidth, birdHeight, false);
+        birdUpBitmap = Bitmap.createScaledBitmap(birdUpBitmap, birdWidth, birdHeight, false);
+        birdDownBitmap = Bitmap.createScaledBitmap(birdDownBitmap, birdWidth, birdHeight, false);
+
+        // Get the dimensions of the screen
+        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+        int screenWidth = displayMetrics.widthPixels;
+        int screenHeight = displayMetrics.heightPixels;
 
 
-        // Initialize player position
-        playerX = 100; // Initial X position
-        playerY = 100; // Initial Y position
+        // Initialize player position dynamically
+        playerX = screenWidth / 4; // Initial X position (1/4 of the screen width)
+        playerY = screenHeight / 2; // Initial Y position (center of the screen)
 
+        // Initialize background dimensions
         backgroundBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.background_image);
-        backgroundWidth = backgroundBitmap.getWidth();
-        backgroundHeight = backgroundBitmap.getHeight();
+        backgroundWidth = screenWidth; // Set background width to screen width
+        backgroundHeight = screenHeight; // Set background height to screen height
         bgX = 0;
+
+        pipeBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.pipe);
+
+        Matrix matrix = new Matrix();
+        matrix.setScale(1, -1); // Flip vertically
+        pipeTopBitmap = Bitmap.createBitmap(pipeBitmap, 0, 0, pipeBitmap.getWidth(), pipeBitmap.getHeight(), matrix, true);
+
+
 
 
     }
 
+
     private void generatePipe() {
-        // Generate a new pair of pipes if enough time has passed since the last spawn
+        Log.d("PipeDebug", "Generating Pipe...");
         long currentTime = System.currentTimeMillis();
-        if (currentTime - lastPipeSpawnTime > PIPE_SPAWN_INTERVAL) {
-            int screenHeight = getHeight(); // Get the height of the screen
-            int pipeWidth = 100;
-            int gapHeight = 300; // Height of the gap between the pipes
+        if (currentTime - lastPipeSpawnTime >= PIPE_SPAWN_INTERVAL) {
+            int screenWidth = getWidth();
+            int screenHeight = getHeight();
+            int pipeWidth = 200; // Desired width for the pipes
+            int gapSize = 300; // Fixed gap size between the top and bottom pipes
+            int minPipeHeight = 100; // Minimum height for the pipes
+            int maxPipeHeight = screenHeight - gapSize - minPipeHeight; // Maximum height for the pipes to maintain a gap
+            int pipeHeight = new Random().nextInt(maxPipeHeight - minPipeHeight) + minPipeHeight; // Random height for the pipes
+            int pipeX = screenWidth; // Pipes spawn off-screen to the right
 
-            // Calculate the top pipe's position
-            int topPipeY = (int) (Math.random() * (screenHeight - gapHeight)); // Random Y position for top pipe
+            // Calculate the Y position of the bottom pipe based on the gap size and top pipe height
+            int bottomPipeY = pipeHeight + gapSize;
 
-            // Create the top pipe
-            Pipe topPipe = new Pipe(getWidth(), 0, pipeWidth, topPipeY);
+            Log.d("PipeDebug", "Screen Height: " + screenHeight);
+            Log.d("PipeDebug", "Pipe Height: " + pipeHeight);
+            Log.d("PipeDebug", "Gap Size: " + gapSize);
+            Log.d("PipeDebug", "Bottom Pipe Y: " + bottomPipeY);
 
-            // Calculate the bottom pipe's position and height based on the gap
-            int bottomPipeY = topPipeY + gapHeight;
-            int bottomPipeHeight = screenHeight - bottomPipeY;
+            // Resize the pipeBitmap and pipeTopBitmap to match the desired pipe dimensions
+            pipeBitmap = Bitmap.createScaledBitmap(pipeBitmap, pipeWidth, pipeHeight, false);
+            pipeTopBitmap = Bitmap.createScaledBitmap(pipeTopBitmap, pipeWidth, screenHeight - bottomPipeY, false);
 
-            // Create the bottom pipe
-            Pipe bottomPipe = new Pipe(getWidth(), bottomPipeY, pipeWidth, bottomPipeHeight);
+            // Create and add pipes to the list
+            Pipe topPipe = new Pipe(pipeX, 0, pipeWidth, screenHeight - bottomPipeY, pipeTopBitmap);
+            Pipe bottomPipe = new Pipe(pipeX, bottomPipeY, pipeWidth, pipeHeight, pipeBitmap);
 
-            // Add the pipes to the list
             pipes.add(topPipe);
             pipes.add(bottomPipe);
 
-            // Update the last spawn time
             lastPipeSpawnTime = currentTime;
         }
     }
+
+
 
 
     private void movePipes(int screenWidth) {
         Iterator<Pipe> iterator = pipes.iterator();
         while (iterator.hasNext()) {
             Pipe pipe = iterator.next();
-            pipe.update(); // Update pipe position
+            pipe.update(worldSpeed); // Assuming update() method moves the pipe to the left
             if (pipe.isOffScreen(screenWidth)) {
-                iterator.remove(); // Remove pipe if off screen
+                iterator.remove(); // Remove the pipe if it's off the screen
             }
         }
     }
 
+    private void checkForScore() {
+        for (int i = 0; i < pipes.size(); i+=2) { // Increment by 2 to check every other pipe
+            Pipe pipe = pipes.get(i);
+            int birdCenterX = playerX + birdBitmap.getWidth() / 2;
+            // Assuming getX() gives the left edge of the pipe and you score as the bird crosses the left edge
+            if (!pipe.scored && birdCenterX > pipe.getX() + pipe.getWidth()) {
+                score++; // Increment score for passing a pair
+                pipe.scored = true; // Mark this pipe as scored
+                pipes.get(i+1).scored = true; // Also mark its pair as scored, if pairs are consecutive
+            }
+        }
+    }
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
@@ -143,21 +197,35 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         Canvas canvas = surfaceHolder.lockCanvas();
         if (canvas != null) {
             try {
-                // Clear the canvas
                 canvas.drawBitmap(backgroundBitmap, bgX, 0, null);
 
-                // Draw the player bird
-                canvas.drawBitmap(birdBitmap, playerX, playerY, null);
+                // Choose the correct bird image
+                Bitmap currentBirdBitmap = birdBitmap;
+                if (velocity < 0) {
+                    currentBirdBitmap = birdUpBitmap; // Ascending
+                } else if (velocity > 0) {
+                    currentBirdBitmap = birdDownBitmap; // Descending
+                }
 
-                // Draw pipes
+                // Draw the player bird
+                canvas.drawBitmap(currentBirdBitmap, playerX, playerY, null);
+
                 for (Pipe pipe : pipes) {
                     pipe.draw(canvas);
                 }
+                Paint scorePaint = new Paint();
+                scorePaint.setColor(Color.WHITE);
+                scorePaint.setTextSize(50);
+                scorePaint.setAntiAlias(true);
+
+                canvas.drawText("Score: " + score, canvas.getWidth() / 2f, 100, scorePaint);
+
             } finally {
                 surfaceHolder.unlockCanvasAndPost(canvas);
             }
         }
     }
+
 
     private void startGameLoop() {
         running = true;
@@ -179,8 +247,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         public void run() {
             while (running && !Thread.currentThread().isInterrupted()) {
                 // Update player's vertical position for gravity effect
-                playerY += gravity;
-                // Redraw the canvas
+                velocity += gravity; // Gravity pulls down, increasing the downward velocity
+                playerY += velocity;
                 draw();
                 try {
                     Thread.sleep(50);
@@ -190,32 +258,35 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             }
         }
     });
-
     private Thread worldMovementThread = new Thread(new Runnable() {
         @Override
         public void run() {
-            int loopingPointX = -1000; // Adjust this value according to your game's design
+            double loopingPointX = -backgroundWidth / 1.05; // Adjust this value according to your background image
             while (running && !Thread.currentThread().isInterrupted()) {
-                // Update world position for side-scrolling effect
+                // Move the background
                 bgX -= worldSpeed;
-
-                // Check if the background image has reached the looping point
                 if (bgX <= loopingPointX) {
-                    // Reset background position to start scrolling from the beginning
-                    bgX = 0; // Or set it to a specific position if needed
+                    bgX = 0; // Reset background position
                 }
 
-                // Redraw the canvas
+                // Move the pipes every frame
+                movePipes(getWidth());
+
+                // Redraw the canvas to reflect changes
                 draw();
 
+                // Sleep to control frame rate
                 try {
-                    Thread.sleep(30);
+                    Thread.sleep(16); // Aim for ~60 FPS
                 } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
+                    Thread.currentThread().isInterrupted();
                 }
             }
         }
     });
+
+
+
 
     private Thread pipeThread = new Thread(new Runnable() {
         @Override
@@ -224,13 +295,13 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                 // Game loop logic
                 generatePipe();
                 movePipes(getWidth()); // Pass the screen width to movePipes
-                // Other game logic
+                checkForScore();
 
                 // Redraw the canvas
                 draw();
 
                 try {
-                    Thread.sleep(30); // Adjust the sleep time as needed
+                    Thread.sleep(PIPE_SPAWN_INTERVAL); // Adjust the sleep time as needed
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
@@ -238,9 +309,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         }
     });
     private void jump() {
-        // Move the player upwards (jump)
-        playerY -= 100; // Adjust the value as needed
-        // Redraw the canvas after the jump
+        velocity = jumpStrength; // This will make the bird "jump" upwards
         draw();
     }
 }
