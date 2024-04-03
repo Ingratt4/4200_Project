@@ -19,8 +19,20 @@
     <ListView
         android:id="@+id/listViewHighScores"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_below="@id/textViewTitle"
-        android:padding="16dp" />
+        android:padding="16dp"
+        android:divider="@null"
+        android:layout_above="@+id/backButton" />
+
+    <!-- Back Button -->
+    <Button
+        android:id="@+id/backButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Back to Main Menu"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="16dp" />
 
 </RelativeLayout>

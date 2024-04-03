@@ -16,7 +16,6 @@ public class HighScore {
         return playerName + " " + score;
     }
 
-    // Getters and setters
     public int getId() {
         return id;
     }

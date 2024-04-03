@@ -7,11 +7,11 @@ import android.graphics.Paint;
 import android.util.Log;
 
 public class Pipe {
-    private int x, y; // Position of the pipe
-    private int width, height; // Size of the pipe
+    private int x, y;
+    private int width, height;
 
-    private Bitmap bitmap; // The image for this pipe
-    public boolean scored = false; // Add this line
+    private Bitmap bitmap;
+    public boolean scored = false;
 
     public Pipe(int x, int y, int width, int height, Bitmap bitmap) {
         this.x = x;
@@ -20,13 +20,11 @@ public class Pipe {
         this.height = height;
         this.bitmap = bitmap;
 
-        // Initialize paint object
-
     }
 
     public void update(int speed) {
-        // Update pipe position (e.g., move it to the left)
-        x -= speed; // Assuming 'worldSpeed' is accessible from this class
+
+        x -= speed;
         Log.d("PipeMove", "Moving pipe at speed: " + speed);
     }
 
@@ -56,5 +54,4 @@ public class Pipe {
         return height;
     }
 
-    // Other methods as needed (e.g., getters/setters)
 }
