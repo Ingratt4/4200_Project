@@ -52,5 +52,9 @@ public class Pipe {
         return y;
     }
 
+    public int getHeight() {
+        return height;
+    }
+
     // Other methods as needed (e.g., getters/setters)
 }

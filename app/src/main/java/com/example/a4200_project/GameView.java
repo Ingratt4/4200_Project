@@ -1,6 +1,7 @@
 package com.example.a4200_project;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -23,17 +24,11 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
 
     private static final long PIPE_SPAWN_INTERVAL = 3300; // Interval between pipe spawns (milliseconds)
-    private static final int GAP_SIZE =400 ;
-
-
     private SurfaceHolder surfaceHolder;
-    private int playerX, playerY; // Player's position
-
+    private boolean isGameOver = false;
+    private int playerX, playerY;
     private int gravity = 10;
-
-    private int gapSize = 200; // You can adjust this value as needed
-
-    private int score = 0; // Player's score
+    private int score = 0;
     private int worldSpeed = 10;
     private Bitmap backgroundBitmap;
     private static final int MAX_PIPES = 5; // Maximum number of active pipes on the screen
@@ -42,15 +37,14 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     private int backgroundWidth, backgroundHeight;
     private int bgX;
-    private List<Pipe> pipes = new ArrayList<>(); // List to hold active pipes
-    private long lastPipeSpawnTime; // Timestamp of the last pipe spawn
+    private List<Pipe> pipes = new ArrayList<>();
+    private long lastPipeSpawnTime;
 
-    private int velocity = 0; // Player's velocity
+    private int velocity = 0;
     private final int jumpStrength = -40; // Negative value to move up
 
-
     private boolean running = true; // Flag to control the game loop
-    private int gapHeight = 200; // The vertical gap between the top and bottom pipes
+
     public GameView(Context context) {
         this(context, null);
     }
@@ -88,11 +82,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         backgroundHeight = screenHeight; // Set background height to screen height
         bgX = 0;
 
-        pipeBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.pipe);
-
-        Matrix matrix = new Matrix();
-        matrix.setScale(1, -1); // Flip vertically
-        pipeTopBitmap = Bitmap.createBitmap(pipeBitmap, 0, 0, pipeBitmap.getWidth(), pipeBitmap.getHeight(), matrix, true);
+        pipeTopBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.pipe_top);
+        pipeBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.pipe_bottom);
 
 
 
@@ -101,33 +92,31 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
 
     private void generatePipe() {
-        Log.d("PipeDebug", "Generating Pipe...");
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastPipeSpawnTime >= PIPE_SPAWN_INTERVAL) {
             int screenWidth = getWidth();
             int screenHeight = getHeight();
-            int pipeWidth = 200; // Desired width for the pipes
-            int gapSize = 300; // Fixed gap size between the top and bottom pipes
-            int minPipeHeight = 100; // Minimum height for the pipes
-            int maxPipeHeight = screenHeight - gapSize - minPipeHeight; // Maximum height for the pipes to maintain a gap
-            int pipeHeight = new Random().nextInt(maxPipeHeight - minPipeHeight) + minPipeHeight; // Random height for the pipes
-            int pipeX = screenWidth; // Pipes spawn off-screen to the right
+            int pipeWidth = 200; // Adjust based on your design preferences
+            // Randomize the gap size between 200 and 500 pixels
+            int gapSize = new Random().nextInt(301) + 200; // (Max - Min + 1) + Min to ensure the range is 200 to 500 inclusive
+            int minPipeHeight = 100; // Minimum visible height of a pipe
+            int maxPipeHeight = screenHeight - gapSize - minPipeHeight;
+            int topPipeHeight = new Random().nextInt(maxPipeHeight - minPipeHeight) + minPipeHeight;
+            int bottomPipeHeight = screenHeight - topPipeHeight - gapSize;
+            int pipeX = screenWidth; // Spawn pipes off-screen to the right
 
-            // Calculate the Y position of the bottom pipe based on the gap size and top pipe height
-            int bottomPipeY = pipeHeight + gapSize;
+            // Since you're using separate images for top and bottom pipes and assuming they can be scaled uniformly,
+            // Create scaled versions of the pipe bitmaps for this pair of pipes
+            Bitmap scaledTopPipeBitmap = Bitmap.createScaledBitmap(pipeTopBitmap, pipeWidth, topPipeHeight, false);
+            Bitmap scaledBottomPipeBitmap = Bitmap.createScaledBitmap(pipeBitmap, pipeWidth, bottomPipeHeight, false);
 
-            Log.d("PipeDebug", "Screen Height: " + screenHeight);
-            Log.d("PipeDebug", "Pipe Height: " + pipeHeight);
-            Log.d("PipeDebug", "Gap Size: " + gapSize);
-            Log.d("PipeDebug", "Bottom Pipe Y: " + bottomPipeY);
+            // Calculate Y positions for the top and bottom pipes
+            int topPipeY = 0; // Top pipe's Y position starts at the top of the screen
+            int bottomPipeY = screenHeight - bottomPipeHeight; // Bottom pipe's Y is calculated from the bottom up
 
-            // Resize the pipeBitmap and pipeTopBitmap to match the desired pipe dimensions
-            pipeBitmap = Bitmap.createScaledBitmap(pipeBitmap, pipeWidth, pipeHeight, false);
-            pipeTopBitmap = Bitmap.createScaledBitmap(pipeTopBitmap, pipeWidth, screenHeight - bottomPipeY, false);
-
-            // Create and add pipes to the list
-            Pipe topPipe = new Pipe(pipeX, 0, pipeWidth, screenHeight - bottomPipeY, pipeTopBitmap);
-            Pipe bottomPipe = new Pipe(pipeX, bottomPipeY, pipeWidth, pipeHeight, pipeBitmap);
+            // Create and add the pipe objects
+            Pipe topPipe = new Pipe(pipeX, topPipeY, pipeWidth, topPipeHeight, scaledTopPipeBitmap);
+            Pipe bottomPipe = new Pipe(pipeX, bottomPipeY, pipeWidth, bottomPipeHeight, scaledBottomPipeBitmap);
 
             pipes.add(topPipe);
             pipes.add(bottomPipe);
@@ -135,8 +124,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             lastPipeSpawnTime = currentTime;
         }
     }
-
-
 
 
     private void movePipes(int screenWidth) {
@@ -183,15 +170,76 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        // Handle touch events
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                // Jump when touched
-                jump();
-                break;
+        if (!isGameOver && event.getAction() == MotionEvent.ACTION_DOWN) {
+            jump();
+            return true;
         }
-        return true;
+        return false;
     }
+
+
+    private void resetGameState() {
+        // Reset game state for a new game
+        score = 0;
+        pipes.clear();
+        playerY = getHeight() / 2;
+        isGameOver = false;
+        running = true;
+    }
+
+    private void checkCollisionsAndGameOver() {
+        if (checkCollision()) {
+            gameOver(); // If collision detected, end the game
+        }
+    }
+
+    private void gameOver() {
+        running = false; // Stop game loop
+
+        // Create an Intent for EnterNameActivity
+        Intent enterNameIntent = new Intent(getContext(), EnterNameActivity.class);
+        enterNameIntent.putExtra("score", score); // Pass the final score to the name entry activity
+        getContext().startActivity(enterNameIntent);
+    }
+
+
+
+
+    private boolean checkCollision() {
+        for (Pipe pipe : pipes) {
+            // Assuming Pipe class has methods getX(), getY(), getWidth(), and getHeight() for collision detection
+            // Check for collision with the top and bottom pipes
+            if (playerX < pipe.getX() + pipe.getWidth() &&
+                    playerX + birdBitmap.getWidth() > pipe.getX() &&
+                    playerY < pipe.getY() + pipe.getHeight() &&
+                    playerY + birdBitmap.getHeight() > pipe.getY()) {
+                return true; // Collision detected
+            }
+        }
+
+        // Check if the bird has fallen out of bounds
+        if (playerY < 0 || playerY + birdBitmap.getHeight() > getHeight()) {
+            return true; // Out of bounds
+        }
+
+        return false; // No collision
+    }
+    private void drawGameOver(Canvas canvas) {
+        Paint gameOverPaint = new Paint();
+        gameOverPaint.setColor(Color.WHITE);
+        gameOverPaint.setTextSize(100);
+        gameOverPaint.setTextAlign(Paint.Align.CENTER);
+        canvas.drawText("Game Over", getWidth() / 2, getHeight() / 2, gameOverPaint);
+
+        Paint scorePaint = new Paint();
+        scorePaint.setColor(Color.WHITE);
+        scorePaint.setTextSize(50);
+        scorePaint.setTextAlign(Paint.Align.CENTER);
+        canvas.drawText("Score: " + score, getWidth() / 2, (getHeight() / 2) + 60, scorePaint);
+
+        // Draw "Play Again" and "Hiscores" buttons or text placeholders
+    }
+
 
     private void draw() {
         Canvas canvas = surfaceHolder.lockCanvas();
@@ -246,6 +294,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         @Override
         public void run() {
             while (running && !Thread.currentThread().isInterrupted()) {
+                // Check for collision and handle game over
+                checkCollisionsAndGameOver();
+
                 // Update player's vertical position for gravity effect
                 velocity += gravity; // Gravity pulls down, increasing the downward velocity
                 playerY += velocity;
@@ -268,6 +319,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                 if (bgX <= loopingPointX) {
                     bgX = 0; // Reset background position
                 }
+
+                // Check for collision and handle game over
+                checkCollisionsAndGameOver();
 
                 // Move the pipes every frame
                 movePipes(getWidth());
@@ -296,6 +350,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                 generatePipe();
                 movePipes(getWidth()); // Pass the screen width to movePipes
                 checkForScore();
+
+                // Check for collision and handle game over
+                checkCollisionsAndGameOver();
 
                 // Redraw the canvas
                 draw();

@@ -1,8 +1,15 @@
 package com.example.a4200_project;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+
+import com.example.a4200_project.HighScore;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -35,5 +42,40 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // Handle database upgrades if necessary
+    }
+
+    public void insertHighScore(String playerName, int score) {
+        SQLiteDatabase db = getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_PLAYER_NAME, playerName);
+        values.put(COLUMN_SCORE, score);
+
+        db.insert(TABLE_HIGH_SCORES, null, values);
+        db.close();
+    }
+
+    public List<HighScore> getAllHighScores() {
+        List<HighScore> highScores = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.query(TABLE_HIGH_SCORES,
+                null,
+                null,
+                null,
+                null,
+                null,
+                COLUMN_SCORE + " DESC"); // Order by score descending
+
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                int id = cursor.getInt(cursor.getColumnIndex(COLUMN_ID));
+                String playerName = cursor.getString(cursor.getColumnIndex(COLUMN_PLAYER_NAME));
+                int score = cursor.getInt(cursor.getColumnIndex(COLUMN_SCORE));
+                HighScore highScore = new HighScore(id, playerName, score);
+                highScores.add(highScore);
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+        return highScores;
     }
 }

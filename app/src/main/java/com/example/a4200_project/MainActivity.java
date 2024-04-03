@@ -11,11 +11,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
     private DatabaseHelper dbHelper;
-    private String playerName; // Declare playerName variable here
-
-    static {
-        System.loadLibrary("a4200_project");
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,34 +36,13 @@ public class MainActivity extends AppCompatActivity {
         highScoresButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Handle High Scores button click
-                // Navigate to the high scores screen
+                Intent intent = new Intent(MainActivity.this, HighScoresActivity.class);
+                startActivity(intent);
             }
         });
     }
 
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-
-        if (hasFocus) {
-            hideSystemUi();
-        }
-    }
-
-    private void hideSystemUi() {
-        View decorView = getWindow().getDecorView();
-        decorView.setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_FULLSCREEN
-        );
-    }
-
-    // Method to insert a high score into the database
+    // Insert high score into the database
     private void insertHighScore(String playerName, int score) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
 
@@ -78,6 +52,5 @@ public class MainActivity extends AppCompatActivity {
 
         long newRowId = db.insert(DatabaseHelper.TABLE_HIGH_SCORES, null, values);
     }
-
-
 }
+

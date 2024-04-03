@@ -29,6 +29,10 @@
             android:name=".GameActivity"
             android:exported="true">
         </activity>
+        <activity android:name=".GameOverActivity" />
+        <activity android:name=".HighScoresActivity" />
+        <activity android:name=".EnterNameActivity" />
+
 
     </application>
 

@@ -1,0 +1,51 @@
+<!-- game_over_screen.xml -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#80000000"> <!-- Semi-transparent black background -->
+
+    <!-- Game over message -->
+    <TextView
+        android:id="@+id/game_over_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Game Over"
+        android:textSize="24sp"
+        android:textColor="#FFFFFF"
+        android:layout_centerInParent="true" />
+
+    <!-- Display score -->
+    <TextView
+        android:id="@+id/final_score"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Final Score: 0"
+        android:textSize="18sp"
+        android:textColor="#FFFFFF"
+        android:layout_below="@id/game_over_message"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp" />
+
+    <!-- Button to restart the game -->
+    <Button
+        android:id="@+id/restart_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Restart"
+        android:textColor="#FFFFFF"
+        android:layout_below="@id/final_score"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="32dp" />
+
+    <!-- Button to view high scores or any other actions -->
+    <Button
+        android:id="@+id/high_scores_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="High Scores"
+        android:textColor="#FFFFFF"
+        android:layout_below="@id/restart_button"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp" />
+
+</RelativeLayout>
