@@ -15,6 +15,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main_menu); // Set the content view to main menu layout
 
 
+
         Button startButton = findViewById(R.id.start_button);
         Button highScoresButton = findViewById(R.id.high_scores_button);
 
@@ -26,6 +27,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
+
         highScoresButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -33,6 +36,10 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+
+
+
     }
 
 

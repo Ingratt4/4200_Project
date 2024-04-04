@@ -3,21 +3,40 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:gravity="center">
+    android:gravity="center"
+    android:background="@drawable/fb_bg">
 
-    <!-- Start Button -->
-    <Button
-        android:id="@+id/start_button"
-        android:layout_width="wrap_content"
+    <!-- Facebook Logo and Buttons Container -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Start"
-        android:layout_marginBottom="16dp"/>
+        android:orientation="vertical"
+        android:gravity="center">
 
-    <!-- High Scores Button -->
-    <Button
-        android:id="@+id/high_scores_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="High Scores"/>
+        <!-- Facebook Logo -->
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/fblogo"
+            android:layout_marginTop="16dp"
+            android:paddingBottom="100dp"/>
+
+        <!-- Start Button -->
+        <Button
+            android:id="@+id/start_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Start"
+            android:layout_marginTop="16dp"/>
+
+        <!-- High Scores Button -->
+        <Button
+            android:id="@+id/high_scores_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="High Scores"
+            android:layout_marginTop="16dp"/>
+
+    </LinearLayout>
 
 </LinearLayout>

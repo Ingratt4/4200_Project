@@ -78,4 +78,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
         return highScores;
     }
+    public void wipeHighScores() {
+        SQLiteDatabase db = getWritableDatabase();
+        db.delete(TABLE_HIGH_SCORES, null, null);
+        db.close();
+    }
 }

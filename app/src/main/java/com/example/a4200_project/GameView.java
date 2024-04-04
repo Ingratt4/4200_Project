@@ -1,5 +1,6 @@
 package com.example.a4200_project;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -8,12 +9,14 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.widget.ImageView;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -44,6 +47,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     private boolean running = true;
 
+
     public GameView(Context context) {
         this(context, null);
     }
@@ -52,6 +56,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         super(context, attrs);
         surfaceHolder = getHolder();
         surfaceHolder.addCallback(this);
+
+
+
 
         // Initialize player paint
         birdBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.bird);
@@ -70,9 +77,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         int screenHeight = displayMetrics.heightPixels;
 
 
-        // Initialize player position dynamically
-        playerX = screenWidth / 4; // Initial X position (1/4 of the screen width)
-        playerY = screenHeight / 2; // Initial Y position (center of the screen)
+        playerX = screenWidth / 4;
+        playerY = screenHeight / 2;
 
         // Initialize background dimensions
         backgroundBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.background_image);
@@ -82,6 +88,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
         pipeTopBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.pipe_top);
         pipeBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.pipe_bottom);
+
+
 
 
 
@@ -174,6 +182,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     private void checkCollisionsAndGameOver() {
         if (checkCollision()) {
+
             gameOver();
         }
     }
@@ -207,21 +216,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
         return false;
     }
-    private void drawGameOver(Canvas canvas) {
-        Paint gameOverPaint = new Paint();
-        gameOverPaint.setColor(Color.WHITE);
-        gameOverPaint.setTextSize(100);
-        gameOverPaint.setTextAlign(Paint.Align.CENTER);
-        canvas.drawText("Game Over", getWidth() / 2, getHeight() / 2, gameOverPaint);
-
-        Paint scorePaint = new Paint();
-        scorePaint.setColor(Color.WHITE);
-        scorePaint.setTextSize(50);
-        scorePaint.setTextAlign(Paint.Align.CENTER);
-        canvas.drawText("Score: " + score, getWidth() / 2, (getHeight() / 2) + 60, scorePaint);
-
-    }
-
 
     private void draw() {
         Canvas canvas = surfaceHolder.lockCanvas();
@@ -242,18 +236,29 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                 for (Pipe pipe : pipes) {
                     pipe.draw(canvas);
                 }
+
+                // Update the paint object for the score text
                 Paint scorePaint = new Paint();
                 scorePaint.setColor(Color.WHITE);
-                scorePaint.setTextSize(50);
+                scorePaint.setTextSize(80); // Increase text size to 80
                 scorePaint.setAntiAlias(true);
+                scorePaint.setTextAlign(Paint.Align.CENTER); // Align text to center
 
-                canvas.drawText("Score: " + score, canvas.getWidth() / 2f, 100, scorePaint);
+                // Get the bounds of the score text to calculate the centered position
+                Rect textBounds = new Rect();
+                scorePaint.getTextBounds("Score: " + score, 0, ("Score: " + score).length(), textBounds);
+                float textX = canvas.getWidth() / 2f; // Center horizontally
+                float textY = textBounds.height() + 50; // Place below the top edge of the canvas
+
+                // Draw the centered score text
+                canvas.drawText("Score: " + score, textX, textY, scorePaint);
 
             } finally {
                 surfaceHolder.unlockCanvasAndPost(canvas);
             }
         }
     }
+
 
 
     private void startGameLoop() {
@@ -291,7 +296,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private Thread worldMovementThread = new Thread(new Runnable() {
         @Override
         public void run() {
-            double loopingPointX = -backgroundWidth / 1.05; // Adjust this value according to your background image
+            double loopingPointX = -backgroundWidth / 1.095; // Adjust this value according to your background image
             while (running && !Thread.currentThread().isInterrupted()) {
                 bgX -= worldSpeed;
                 if (bgX <= loopingPointX) {

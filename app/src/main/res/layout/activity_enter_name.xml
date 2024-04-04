@@ -1,24 +1,53 @@
-<!-- activity_enter_name.xml -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF">
+    android:background="@drawable/fb_bg">
 
+    <!-- Game Over Image -->
+    <ImageView
+        android:id="@+id/game_over_image"
+
+        android:src="@drawable/gameover"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="32dp"
+        android:layout_width="350dp"
+        android:layout_height="200dp"  />
+
+
+
+    <!-- Name EditText -->
     <EditText
         android:id="@+id/name_edit_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Enter your name"
-        android:layout_centerInParent="true"
-        android:padding="16dp"/>
+        android:textSize="16sp"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/game_over_image"
+        android:layout_marginTop="64dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+        android:layout_marginBottom="128dp" />
 
+    <!-- Submit Button -->
     <Button
         android:id="@+id/submit_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Submit"
-        android:layout_below="@id/name_edit_text"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="16dp"/>
+        android:layout_below="@id/name_edit_text"
+        android:layout_marginTop="32dp"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+       android:layout_marginBottom="128dp" /> <!-- Increased margin bottom -->
 
 </RelativeLayout>
