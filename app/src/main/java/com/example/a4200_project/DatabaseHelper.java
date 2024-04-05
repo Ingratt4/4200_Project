@@ -13,7 +13,7 @@ import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
-    public static final String DATABASE_NAME = "your_database_name.db";
+    public static final String DATABASE_NAME = "high_score.db";
     public static final int DATABASE_VERSION = 1;
 
     // Define your table name and columns
